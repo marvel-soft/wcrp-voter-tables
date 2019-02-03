@@ -1,5 +1,5 @@
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-# wcrp-precinct-voter-stats
+# wcrp-voter-tables
 #
 #
 #
@@ -42,9 +42,10 @@ my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";
 my $adPoliticalFile = "../test-in/adall-precincts-jul.csv";
 
 my $fileName       = "";
-my $outputFile     = "precinct-voters-.csv";
-my $precinctFile   = "precinct-stats-.csv";
-my $precinctFileh;
+my $baseFile    = "base.csv";
+my $baseFileh;
+my $contactFile    = "contact.csv";
+my $contactFileh;
 my $printFile      = "precinct-print-.txt";
 my $printFileh;
 
