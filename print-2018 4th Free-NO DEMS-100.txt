@@ -1,7 +1,10 @@
 My inputfile is: ../test-in/2018 4th Free-NO DEMS-100.csv.
-Voter Base-table file: base-2018 4th Free-NO DEMS-100.csv
-Precinct Summary file: precinct-stats-2018 4th Free-NO DEMS-100.csv
-<===> Completed conversion of: ../test-in/2018 4th Free-NO DEMS-100.csv 
-<===> BASE SEGMENTS available in file: base-2018 4th Free-NO DEMS-100.csv 
+Voter Base-table file: base.csv
+Voter Base-table file: contact.csv
+Voter Political-table file: political.csv
+<===> Completed transformation of: ../test-in/2018 4th Free-NO DEMS-100.csv 
+<===> BASE      SEGMENTS available in file: base.csv 
+<===> CONTACT   SEGMENTS available in file: contact.csv 
+<===> POLITICAL SEGMENTS available in file: political.csv 
 <===> Total Records Read: 99 
 <===> Total Records written: 99 

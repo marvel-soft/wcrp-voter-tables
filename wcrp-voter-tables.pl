@@ -229,30 +229,32 @@ sub main {
 	$baseHeading = join( ",", @baseHeading );
 	$baseHeading = $baseHeading . "\n";
 
-	# Build heading for new precinct record
-	$precinctHeading = join( ",", @precinctHeading );
-	$precinctHeading = $precinctHeading . "\n";
+	# Build heading for new contact record
+	$contactHeading = join( ",", @contactHeading );
+	$contactHeading = $contactHeading . "\n";
+
+	# Build heading for new political record
+	$politicalHeading = join( ",", @politicalHeading );
+	$politicalHeading = $politicalHeading . "\n";	
 	#
-	# Initialize process loop and open baseFileh files
-	$fileName = basename( $inputFile, ".csv" );
-	$baseFile = "base-" . $fileName . ".csv";
+	# Initialize process loop and open files
 	printLine ("Voter Base-table file: $baseFile\n");
-	open( baseFileh, ">$baseFile" )
-	  or die "Unable to open baseFileh: $baseFile Reason: $!";
-	print baseFileh $baseHeading;
+	open( $baseFileh, ">$baseFile" )
+	  or die "Unable to open baseFile: $baseFile Reason: $!";
+	print $baseFileh $baseHeading;
+
+	printLine ("Voter Base-table file: $contactFile\n");
+	open( $contactFileh, ">$contactFile" )
+	  or die "Unable to open contactFile: $contactFile Reason: $!";
+	print $contactFileh $baseHeading;
+
+	printLine ("Voter Political-table file: $politicalFile\n");
+	open( $politicalFileh, ">$politicalFile" )
+	  or die "Unable to open politicalFileh: $politicalFile Reason: $!";
+	print $politicalFileh $politicalHeading;
 
 	# initialize the precinct-all table
 	adPoliticalAll(@adPoliticalHash);
-
-	#build name for precinct stats file
-	$fileName = basename( $inputFile, ".csv" );
-	$contactFile = "precinct-stats-" . $fileName . ".csv";
-	printLine ("Precinct Summary file: $contactFile\n");
-	open( $contactFileh, ">>$contactFile" )
-	  or die "Unable to open baseFileh: $contactFile Reason: $!";
-	print $contactFileh $precinctHeading;
-	$i = 0;
-	close $contactFileh;
 
 	# Process loop
 	# Read the entire input and
@@ -275,8 +277,9 @@ sub main {
 		# Create hash of line for transformation
 		@csvRowHash{@csvHeadings} = @values1;
 
-
-		# Assemble database load segments for tables
+		#
+		# Assemble database load  for base segment
+		#
 		%baseLine = ();
 		$baseLine{"precinct"}     = substr $csvRowHash{"precinct"}, 0, 6;
 		$baseLine{"v_status"}     = $csvRowHash{"status"};
@@ -321,7 +324,9 @@ sub main {
 		$leans            = "";
 		$baseLine{"Rank"}  = $voterRank;
 
-
+		#
+		# Assemble database load  for political segment
+		#
 		%politicalLine = ();
 		$politicalLine{"party"} = $csvRowHash{"party"};
 		
@@ -344,7 +349,9 @@ sub main {
 		my $daysRegistered = $now - $before;
 		$daysRegistered = ( $daysRegistered / ( 1440 * 24 ) );
 		$politicalLine{"days_registered"} = int($daysRegistered);
-
+		#
+		# Assemble database load  for contact segment
+		#
 		%contactLine = ();
 		# Assemble Street Address
 		$contactLine{"Address"} = join( ' ',
@@ -364,19 +371,19 @@ sub main {
 		foreach (@baseHeading) {
 			push( @baseProfile, $baseLine{$_} );
 		}
-		print baseFileh join( ',', @baseProfile ), "\n";
+		print $baseFileh join( ',', @baseProfile ), "\n";
 	
 		@contactProfile = ();
 		foreach (@baseHeading) {
-			push( @contactProfile, $baseLine{$_} );
+			push( @contactProfile, $contactLine{$_} );
 		}
-		print baseFileh join( ',', @contactProfile ), "\n";
+		print $contactFileh join( ',', @contactProfile ), "\n";
 	
 		@politicalProfile = ();
 		foreach (@baseHeading) {
-			push( @politicalProfile, $baseLine{$_} );
+			push( @politicalProfile, $politicalLine{$_} );
 		}
-		print baseFileh join( ',', @politicalProfile ), "\n";
+		print $politicalFileh join( ',', @politicalProfile ), "\n";
 		$linesWritten++;
 		#
 		# For now this is the in-elegant way I detect completion
@@ -395,8 +402,10 @@ main();
 # Common Exit
 EXIT:
 
-printLine ("<===> Completed conversion of: $inputFile \n");
-printLine ("<===> BASE SEGMENTS available in file: $baseFile \n");
+printLine ("<===> Completed transformation of: $inputFile \n");
+printLine ("<===> BASE      SEGMENTS available in file: $baseFile \n");
+printLine ("<===> CONTACT   SEGMENTS available in file: $contactFile \n");
+printLine ("<===> POLITICAL SEGMENTS available in file: $politicalFile \n");
 printLine ("<===> Total Records Read: $linesRead \n");
 printLine ("<===> Total Records written: $linesWritten \n");
 
