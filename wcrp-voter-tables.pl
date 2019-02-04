@@ -192,28 +192,30 @@ my @votingProfile;
 my $votingHeading = "";
 my @votingHeading = (
 	"voter_id",
+	"publish_date", 
 	"act_date", 
 	"party",      
-	"election01",    	"election02",
-	"election03",       "election04",
-	"election05",       "election06",
-    "election07", 		"election08",
-	"election09",       "election10",
-	"election11",       "election12",
-	"election13",       "election14",
-	"election15",       "election16",
-	"election17",       "election18",
-	"election19",       "election20",
-	"vote01",    	"vote02",
-	"vote03",       "vote04",
-	"vote05",       "vote06",
-    "vote07", 		"vote08",
-	"vote09",       "vote10",
-	"vote11",       "vote12",
-	"vote13",       "vote14",
-	"vote15",       "vote16",
-	"vote17",       "vote18",
-	"vote19",       "vote20");
+	"election01",   "vote01",  	
+	"election02",	"vote02",
+	"election03",   "vote03",    
+	"election04",	"vote04",
+	"election05",   "vote05",    
+	"election06",	"vote06",
+    "election07", 	"vote07", 	
+	"election08",	"vote08",
+	"election09",   "vote09",   
+	"election10",	"vote10",
+	"election11",   "vote11",   
+	"election12", 	"vote12",
+	"election13",   "vote13",   
+	"election14",	"vote14",
+	"election15",   "vote15",    
+	"election16",	"vote16", 
+	"election17",   "vote17",    
+	"election18",	"vote18",
+	"election19",   "vote19",    
+	"election20",	"vote20"
+	);
 
 my $precinct = "000000";
 
@@ -437,9 +439,46 @@ sub main {
 		$votingLine{"voter_id"}  = $csvRowHash{"voter_id"};
 		$votingLine{"party"}     = $csvRowHash{"party"};
 		$votingLine{"actdate"}   = "01/01/01";
-		$votingLine{"election01"}  = $generalCount;
-		$votingLine{"vote01"}     = $pollCount;
-		
+		$votingLine{"election01"}  = substr($csvHeadings[55],3,14);
+		$votingLine{"vote01"}     = $csvRowHash{$csvHeadings[55]};
+		$votingLine{"election02"}  = substr($csvHeadings[56],3,14);
+		$votingLine{"vote02"}     = $csvRowHash{$csvHeadings[56]};
+		$votingLine{"election03"}  = substr($csvHeadings[57],3,14);
+		$votingLine{"vote03"}     = $csvRowHash{$csvHeadings[57]};
+		$votingLine{"election04"}  = substr($csvHeadings[58],3,14);
+		$votingLine{"vote04"}     = $csvRowHash{$csvHeadings[58]};
+		$votingLine{"election05"}  = substr($csvHeadings[59],3,14);
+		$votingLine{"vote05"}     = $csvRowHash{$csvHeadings[59]};
+		$votingLine{"election06"}  = substr($csvHeadings[60],3,14);
+		$votingLine{"vote06"}     = $csvRowHash{$csvHeadings[60]};
+		$votingLine{"election07"}  = substr($csvHeadings[61],3,14);
+		$votingLine{"vote07"}     = $csvRowHash{$csvHeadings[61]};
+		$votingLine{"election08"}  = substr($csvHeadings[62],3,14);
+		$votingLine{"vote08"}     = $csvRowHash{$csvHeadings[62]};
+		$votingLine{"election09"}  = substr($csvHeadings[63],3,14);
+		$votingLine{"vote09"}     = $csvRowHash{$csvHeadings[63]};
+		$votingLine{"election10"}  = substr($csvHeadings[64],3,14);
+		$votingLine{"vote10"}     = $csvRowHash{$csvHeadings[64]};		
+		$votingLine{"election11"}  = substr($csvHeadings[65],3,14);
+		$votingLine{"vote11"}     = $csvRowHash{$csvHeadings[65]};		
+		$votingLine{"election12"}  = substr($csvHeadings[66],3,14);
+		$votingLine{"vote12"}     = $csvRowHash{$csvHeadings[66]};		
+		$votingLine{"election13"}  = substr($csvHeadings[67],3,14);
+		$votingLine{"vote13"}     = $csvRowHash{$csvHeadings[67]};		
+		$votingLine{"election14"}  = substr($csvHeadings[68],3,14);
+		$votingLine{"vote14"}     = $csvRowHash{$csvHeadings[68]};		
+		$votingLine{"election15"}  = substr($csvHeadings[69],3,14);
+		$votingLine{"vote15"}     = $csvRowHash{$csvHeadings[69]};		
+		$votingLine{"election16"}  = substr($csvHeadings[70],3,14);
+		$votingLine{"vote16"}     = $csvRowHash{$csvHeadings[70]};		
+		$votingLine{"election17"}  = substr($csvHeadings[71],3,14);
+		$votingLine{"vote17"}     = $csvRowHash{$csvHeadings[71]};		
+		$votingLine{"election18"}  = substr($csvHeadings[72],3,14);
+		$votingLine{"vote18"}     = $csvRowHash{$csvHeadings[72]};		
+		$votingLine{"election19"}  = substr($csvHeadings[73],3,14);
+		$votingLine{"vote19"}     = $csvRowHash{$csvHeadings[73]};		
+		$votingLine{"election20"}  = substr($csvHeadings[74],3,14);
+		$votingLine{"vote20"}     = $csvRowHash{$csvHeadings[74]};		
 		@votingProfile = ();
 		foreach (@votingHeading) {
 			push( @votingProfile, $votingLine{$_} );
