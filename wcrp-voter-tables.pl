@@ -25,7 +25,7 @@ use Time::Piece;
 =cut
 
 my $records;
-#my $inputFile = "../test-in/2019 1st Free List 5pre.csv";    
+#my $inputFile = "../test-in/2019 1st Free List 1 voter.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-1100.csv";    
 my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 
@@ -42,12 +42,19 @@ my $adPoliticalFile = "../test-in/adall-precincts-jul.csv";
 my $fileName         = "";
 my $baseFile         = "base.csv";
 my $baseFileh;
+my %baseLine         = ();
 my $contactFile      = "contact.csv";
 my $contactFileh;
+my %contactLine      = ();
 my $politicalFile    = "political.csv";
 my $politicalFileh;
+my %politicalLine    = ();
 my $printFile        = "print-.txt";
 my $printFileh;
+my $votingFile       = "voting.csv";
+my $votingFileh;
+my %votingLine       = ();
+
 
 my @adPoliticalHash = ();
 my %adPoliticalHash;
@@ -58,18 +65,14 @@ my $voteCycle          = "";
 my $fileCount          = 1;
 my $csvHeadings        = "";
 my @csvHeadings;
-my $i;
 my $line1Read    = '';
 my $linesRead    = 0;
 my $printData;
 my $linesWritten = 0;
-my %baseLine      = ();
 my $generalCount;
 my $party;
 my $primaryCount;
 my $pollCount;
-my $precinctPolitical;
-my @precinctPolitical;
 my $absenteeCount   = 0;
 my $leansRepCount   = 0;
 my $leansDemCount   = 0;
@@ -124,7 +127,6 @@ my $totalOTHR       = 0;
 my $totalLEANREP    = 0;
 my $totalLEANDEM    = 0;
 
-#my $csvRowHash;
 my @csvRowHash;
 my %csvRowHash = ();
 my @partyHash;
@@ -135,6 +137,9 @@ my @values1;
 my @values2;
 my @date;
 my $voterRank;
+
+my @baseLine;
+my $baseLine;
 my @baseProfile;
 my $baseHeading = "";
 my @baseHeading = (
@@ -153,17 +158,20 @@ my @baseHeading = (
 	"house_number",    "house_fraction",
 	"apartment_number", "building_number"
 );
+my @contactLine;
+my $contactLine;
 my @contactProfile;
 my $contactHeading = "";
 my @contactHeading = (
 	"voter_id",
 	"care_of",         
+	"phone",           "phone_type",
 	"email",           "mail_city",
 	"mail_state",      "mail_country",
 	"mail_street",     "mail_zip",
-	"phone",
-	"phone_type"
 );
+my @politicalLine;
+my $politicalLine;
 my @politicalProfile;
 my $politicalHeading = "";
 my @politicalHeading = (
@@ -178,23 +186,42 @@ my @politicalHeading = (
 	"LeansREP",        "Leans",
 	"Rank"
 );
+my @votingLine;
+my $votingLine;
+my @votingProfile;
+my $votingHeading = "";
+my @votingHeading = (
+	"voter_id",
+	"act_date", 
+	"party",      
+	"election01",    	"election02",
+	"election03",       "election04",
+	"election05",       "election06",
+    "election07", 		"election08",
+	"election09",       "election10",
+	"election11",       "election12",
+	"election13",       "election14",
+	"election15",       "election16",
+	"election17",       "election18",
+	"election19",       "election20",
+	"vote01",    	"vote02",
+	"vote03",       "vote04",
+	"vote05",       "vote06",
+    "vote07", 		"vote08",
+	"vote09",       "vote10",
+	"vote11",       "vote12",
+	"vote13",       "vote14",
+	"vote15",       "vote16",
+	"vote17",       "vote18",
+	"vote19",       "vote20");
+
 my $precinct = "000000";
-my @baseLine;
-my $baseLine;
-my @contactLine;
-my $contactLine;
-my @politicalLine;
-my $politicalLine;
-
-
 
 #
 # main program controller
 #
 sub main {
 	#Open file for messages and errors
-	$fileName = basename( $inputFile, ".csv" );
-	$printFile = "print-" . $fileName . ".txt";
 	open( $printFileh, ">$printFile" )
 	  or die "Unable to open PRINT: $printFile Reason: $!";
 
@@ -213,7 +240,8 @@ sub main {
 		printLine ("My inputfile is: $inputFile.\n");
 	}
 	unless ( open( INPUT, $inputFile ) ) {
-		die "Unable to open INPUT: $inputFile Reason: $!\n";
+		printLine ("Unable to open INPUT: $inputFile Reason: $!\n");
+		die;
 	}
 
 	# pick out the heading line and hold it and remove end character
@@ -243,15 +271,20 @@ sub main {
 	  or die "Unable to open baseFile: $baseFile Reason: $!";
 	print $baseFileh $baseHeading;
 
-	printLine ("Voter Base-table file: $contactFile\n");
+	printLine ("Voter Contact-table file: $contactFile\n");
 	open( $contactFileh, ">$contactFile" )
 	  or die "Unable to open contactFile: $contactFile Reason: $!";
-	print $contactFileh $baseHeading;
+	print $contactFileh $contactHeading;
 
 	printLine ("Voter Political-table file: $politicalFile\n");
 	open( $politicalFileh, ">$politicalFile" )
 	  or die "Unable to open politicalFileh: $politicalFile Reason: $!";
 	print $politicalFileh $politicalHeading;
+
+	printLine ("Voter Voting-table file: $votingFile\n");
+	open( $votingFileh, ">$votingFile" )
+	  or die "Unable to open votingFileh: $votingFile Reason: $!";
+	print $votingFileh $votingHeading;
 
 	# initialize the precinct-all table
 	adPoliticalAll(@adPoliticalHash);
@@ -277,113 +310,142 @@ sub main {
 		# Create hash of line for transformation
 		@csvRowHash{@csvHeadings} = @values1;
 
-		#
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
 		# Assemble database load  for base segment
-		#
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
 		%baseLine = ();
 		$baseLine{"precinct"}     = substr $csvRowHash{"precinct"}, 0, 6;
 		$baseLine{"v_status"}     = $csvRowHash{"status"};
 		$baseLine{"voter_id"}     = $csvRowHash{"voter_id"};
 		$baseLine{"name_last"}    = $csvRowHash{"name_last"};
 		$baseLine{"name_suffix"}  = $csvRowHash{"name_suffix"};
-		$baseLine{"name_first"}        = $csvRowHash{"name_first"};
-		$baseLine{"name_middle"}       = $csvRowHash{"name_middle"};
-		$baseLine{"gender"}       = "";
+		$baseLine{"name_first"}   = $csvRowHash{"name_first"};
+		$baseLine{"name_middle"}  = $csvRowHash{"name_middle"};
+		$baseLine{"pre_dir"}      = $csvRowHash{"pre_dir"};
+		$baseLine{"post_dir"}     = $csvRowHash{"post_dir"};
+		$baseLine{"street"}       = $csvRowHash{"street"};
+		$baseLine{"type"}         = $csvRowHash{"type"};
+		$baseLine{"city"}         = $csvRowHash{"city"};
+		$baseLine{"state"}        = $csvRowHash{"state"};
+		$baseLine{"zip"}          = $csvRowHash{"zip"};
+		$baseLine{"house_number"}  = $csvRowHash{"house_number"};
+		$baseLine{"house_fraction"}  = $csvRowHash{"house_fraction"};
+		$baseLine{"apartment_number"}  = $csvRowHash{"apartment_number"};
+		$baseLine{"building_number"}  = $csvRowHash{"building_number"};
+		$baseLine{"gender"}       = ""; 
 		if ( $csvRowHash{"gender"} eq 'M' ) {
 			$baseLine{"gender"} = "Male";
 		}
 		if ( $csvRowHash{"gender"} eq 'F' ) {
-			$baseLine{"gender"} = "Female";
+			$baseLine{"gender"}   = "Female";
 		}
-		$baseLine{"military"} = "";
+		$baseLine{"military"}     = "";
 		if ( $csvRowHash{"military"} eq 'Y' ) {
 			$baseLine{"military"} = "Y";
 		}
-		$baseLine{"birth_date"} = "$mm/$dd/$yy";
 		@date = split( /\s*\/\s*/, $csvRowHash{"reg_date"}, -1 );
 		$mm = sprintf( "%02d", $date[0] );
 		$dd = sprintf( "%02d", $date[1] );
 		$yy = sprintf( "%02d", $date[2] );
+		$baseLine{"birth_date"}   = "$mm/$dd/$yy";
 		
+		@baseProfile = ();
+		foreach (@baseHeading) {
+			push( @baseProfile, $baseLine{$_} );
+		}
+		print $baseFileh join( ',', @baseProfile ), "\n";
+
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
+		# Assemble database load  for contact segment
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
+		%contactLine = ();
+		$contactLine{"voter_id"}      = $csvRowHash{"voter_id"};
+		# Assemble Street Address
+		$contactLine{"Address"}       = join( ' ',
+			$csvRowHash{house_number},
+			$csvRowHash{street}, $csvRowHash{type} );
+		$contactLine{"care_of"}       = $csvRowHash{"care_of"};
+		$contactLine{"mail_street"}   = $csvRowHash{"mail_street"};
+		$contactLine{"mail_city"}     = $csvRowHash{"mail_city"};
+		$contactLine{"mail_state"}    = $csvRowHash{"mail_state"};
+		$contactLine{"mail_zip"}      = $csvRowHash{"mail_zip"};
+		$contactLine{"mail_country"}  = $csvRowHash{"mail_country"};
+		$contactLine{"phone"}         = $csvRowHash{"phone_1"};
+
+		@contactProfile = ();
+		foreach (@contactHeading) {
+			push( @contactProfile, $contactLine{$_} );
+		}
+		print $contactFileh join( ',', @contactProfile ), "\n";
+
+
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
+		# Assemble database load  for political segment
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
+		%politicalLine = ();
+		$politicalLine{"voter_id"}  = $csvRowHash{"voter_id"};
+		$politicalLine{"party"}     = $csvRowHash{"party"};
+		$politicalLine{"precinct"}  = $csvRowHash{"precinct"};
+		$politicalLine{"precinct_name"}  = $csvRowHash{"precinct_name"};
+		countParty();
+		@date = split( /\s*\/\s*/, $csvRowHash{"reg_date"}, -1 );
+		my $mm = sprintf( "%02d", $date[0] );
+		my $dd = sprintf( "%02d", $date[1] );
+		my $yy = sprintf( "%02d", $date[2] );
+		$politicalLine{"reg_date"}  = "$mm/$dd/$yy";
+		# then the originl registration and days total
+		@date = split( /\s*\/\s*/, $csvRowHash{"reg_date_original"}, -1 );
+		$mm = sprintf( "%02d", $date[0] );
+		$dd = sprintf( "%02d", $date[1] );
+		$yy = sprintf( "%02d", $date[2] );
+		$politicalLine{"reg_date_original"} = "$mm/$dd/$yy";
+		my $before =
+		  Time::Piece->strptime( $politicalLine{"reg_date_original"}, "%m/%d/%y" );
+		my $now            = localtime;
+		my $daysRegistered = $now - $before;
+		$daysRegistered = ( $daysRegistered / ( 1440 * 24 ) );
+		$politicalLine{"days_registered"} = int($daysRegistered);
 		evaluateVoter();
-		$baseLine{"Primaries"} = $primaryCount;
-		$baseLine{"Generals"}  = $generalCount;
-		$baseLine{"Polls"}     = $pollCount;
-		$baseLine{"Absentee"}  = $absenteeCount;
-		$baseLine{"LeansREP"}  = $leansRepCount;
-		$baseLine{"LeansDEM"}  = $leansDemCount;
-		$baseLine{"LeanREP"}   = $leanRep;
-		$baseLine{"LeanDEM"}   = $leanDem;
+		$politicalLine{"Primaries"} = $primaryCount;
+		$politicalLine{"Generals"}  = $generalCount;
+		$politicalLine{"Polls"}     = $pollCount;
+		$politicalLine{"Absentee"}  = $absenteeCount;
+		$politicalLine{"LeansREP"}  = $leansRepCount;
+		$politicalLine{"LeansDEM"}  = $leansDemCount;
+		$politicalLine{"LeanREP"}   = $leanRep;
+		$politicalLine{"LeanDEM"}   = $leanDem;
 		if ($leanDem) {
 			$leans = "DEM";
 		}
 		if ($leanRep) {
 			$leans = "REP";
 		}
-		$baseLine{"Leans"} = $leans;
+		$politicalLine{"Leans"} = $leans;
 		$leans            = "";
-		$baseLine{"Rank"}  = $voterRank;
-
-		#
-		# Assemble database load  for political segment
-		#
-		%politicalLine = ();
-		$politicalLine{"party"} = $csvRowHash{"party"};
+		$politicalLine{"Rank"}  = $voterRank;
 		
-		countParty();
-		@date = split( /\s*\/\s*/, $csvRowHash{"birth_date"}, -1 );
-		my $mm = sprintf( "%02d", $date[0] );
-		my $dd = sprintf( "%02d", $date[1] );
-		my $yy = sprintf( "%02d", $date[2] );
-		$politicalLine{"reg_date"} = "$mm/$dd/$yy";
-
-		# then the originl registration and days total
-		@date = split( /\s*\/\s*/, $csvRowHash{"reg_date_original"}, -1 );
-		$mm = sprintf( "%02d", $date[0] );
-		$dd = sprintf( "%02d", $date[1] );
-		$yy = sprintf( "%02d", $date[2] );
-		$politicalLine{"reg_date_orig"} = "$mm/$dd/$yy";
-		my $before =
-		  Time::Piece->strptime( $politicalLine{"reg_date_orig"}, "%m/%d/%y" );
-		my $now            = localtime;
-		my $daysRegistered = $now - $before;
-		$daysRegistered = ( $daysRegistered / ( 1440 * 24 ) );
-		$politicalLine{"days_registered"} = int($daysRegistered);
-		#
-		# Assemble database load  for contact segment
-		#
-		%contactLine = ();
-		# Assemble Street Address
-		$contactLine{"Address"} = join( ' ',
-			$csvRowHash{house_number},
-			$csvRowHash{street}, $csvRowHash{type} );
-		$contactLine{"care_of"} = $csvRowHash{care_of};
-		$contactLine{"mail_street"} = $csvRowHash{mail_street};
-		$contactLine{"mail_city"} = $csvRowHash{mail_city};
-		$contactLine{"mail_state"} = $csvRowHash{mail_state};
-		$contactLine{"mail_zip"} = $csvRowHash{mail_zip};
-		$contactLine{"mail_country"} = $csvRowHash{mail_country};
-		$contactLine{"phone"} = $csvRowHash{"phone_1"};
-
-		# Line processed- write it and go on....
-		$i++;
-		@baseProfile = ();
-		foreach (@baseHeading) {
-			push( @baseProfile, $baseLine{$_} );
-		}
-		print $baseFileh join( ',', @baseProfile ), "\n";
-	
-		@contactProfile = ();
-		foreach (@baseHeading) {
-			push( @contactProfile, $contactLine{$_} );
-		}
-		print $contactFileh join( ',', @contactProfile ), "\n";
-	
 		@politicalProfile = ();
-		foreach (@baseHeading) {
+		foreach (@politicalHeading) {
 			push( @politicalProfile, $politicalLine{$_} );
 		}
 		print $politicalFileh join( ',', @politicalProfile ), "\n";
+
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
+		# Assemble database load  for voting segment
+		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
+		%votingLine = ();
+		$votingLine{"voter_id"}  = $csvRowHash{"voter_id"};
+		$votingLine{"party"}     = $csvRowHash{"party"};
+		$votingLine{"actdate"}   = "01/01/01";
+		$votingLine{"election01"}  = $generalCount;
+		$votingLine{"vote01"}     = $pollCount;
+		
+		@votingProfile = ();
+		foreach (@votingHeading) {
+			push( @votingProfile, $votingLine{$_} );
+		}
+		print $votingFileh join( ',', @votingProfile ), "\n";
+	
 		$linesWritten++;
 		#
 		# For now this is the in-elegant way I detect completion
@@ -406,12 +468,15 @@ printLine ("<===> Completed transformation of: $inputFile \n");
 printLine ("<===> BASE      SEGMENTS available in file: $baseFile \n");
 printLine ("<===> CONTACT   SEGMENTS available in file: $contactFile \n");
 printLine ("<===> POLITICAL SEGMENTS available in file: $politicalFile \n");
+printLine ("<===> VOTING    SEGMENTS available in file: $votingFile \n");
 printLine ("<===> Total Records Read: $linesRead \n");
 printLine ("<===> Total Records written: $linesWritten \n");
 
 close(INPUT);
-close(baseFileh);
+close($baseFileh);
 close($contactFileh);
+close($politicalFileh);
+close($votingFileh);
 close($printFileh);
 exit;
 
