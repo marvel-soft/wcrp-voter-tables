@@ -12,6 +12,8 @@ use DBI;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use Time::Piece;
+no warnings "uninitialized";
+
 
 =head1 Function
 =over
@@ -25,11 +27,12 @@ use Time::Piece;
 =cut
 
 my $records;
+#my $inputFile = "../test-in/2019 1st Free stopped proc.csv";    
 #my $inputFile = "../test-in/2019 1st Free List 1 voter.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-1100.csv";    
-my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
+#my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 
-#my $inputFile = "../test-in/2018 4th Free List Sample.csv";    
+my $inputFile = "../test-in/2019 1st Free List 1.7.19.csv";    
 
 #my $inputFile = "../test-in/voter-leans-test.csv";    #
 #my $inputFile = "../test-in/2018-3rd Free List.csv";#
@@ -67,6 +70,7 @@ my $csvHeadings        = "";
 my @csvHeadings;
 my $line1Read    = '';
 my $linesRead    = 0;
+my $linesIncRead    = 0;
 my $printData;
 my $linesWritten = 0;
 my $generalCount;
@@ -151,6 +155,7 @@ my @baseHeading = (
 	"birth_place",     "birth_date",
 	"gender",          "military",
 	"drivers_license", "affidavit",
+	"address",
 	"pre_dir",         "post_dir",
 	"street",          "type",
 	"city",            "state",
@@ -266,6 +271,10 @@ sub main {
 	# Build heading for new political record
 	$politicalHeading = join( ",", @politicalHeading );
 	$politicalHeading = $politicalHeading . "\n";	
+
+	# Build heading for new voting record
+	$votingHeading = join( ",", @votingHeading );
+	$votingHeading = $votingHeading . "\n";	
 	#
 	# Initialize process loop and open files
 	printLine ("Voter Base-table file: $baseFile\n");
@@ -299,6 +308,11 @@ sub main {
   NEW:
 	while ( $line1Read = <INPUT> ) {
 		$linesRead++;
+		$linesIncRead++;
+		if ($linesIncRead == 1000) {
+			printLine ("$linesRead lines processed\n");
+			$linesIncRead = 0;
+		}
 		#
 		# Get the data into an array that matches the headers array
 		chomp $line1Read;
@@ -323,6 +337,9 @@ sub main {
 		$baseLine{"name_suffix"}  = $csvRowHash{"name_suffix"};
 		$baseLine{"name_first"}   = $csvRowHash{"name_first"};
 		$baseLine{"name_middle"}  = $csvRowHash{"name_middle"};
+		$baseLine{"address"}  = join( ' ',
+			$csvRowHash{house_number},
+			$csvRowHash{street}, $csvRowHash{type} );
 		$baseLine{"pre_dir"}      = $csvRowHash{"pre_dir"};
 		$baseLine{"post_dir"}     = $csvRowHash{"post_dir"};
 		$baseLine{"street"}       = $csvRowHash{"street"};
@@ -523,9 +540,10 @@ exit;
 # Print report line
 #
 sub printLine  {
+	my $datestring = localtime();
 	($printData) = @_;
-	print $printFileh $printData;
-	print $printData;
+	print $printFileh $datestring . ' ' . $printData;
+	print $datestring . ' ' . $printData;
 }
 
 
