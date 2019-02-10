@@ -12,7 +12,10 @@ use DBI;
 use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use Time::Piece;
-use Date::Calc "Delta_Days";
+use Math::Round;
+#use DateTime;
+#use DateTime::Duration;
+#use DateTime::Format::ISO8601;
 
 no warnings "uninitialized";
 
@@ -30,11 +33,11 @@ no warnings "uninitialized";
 
 my $records;
 #my $inputFile = "../test-in/2019 1st Free stopped proc.csv";    
-my $inputFile = "../test-in/2019 1st Free List 1 voter.csv";    
+#my $inputFile = "../test-in/2019 1st Free List 1 voter.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-1100.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 
-#my $inputFile = "../test-in/2019 1st Free List 1.7.19.csv";    
+my $inputFile = "../test-in/2019 1st Free List 1.7.19.csv";    
 
 #my $inputFile = "../test-in/voter-leans-test.csv";    #
 #my $inputFile = "../test-in/2018-3rd Free List.csv";#
@@ -424,16 +427,9 @@ sub main {
 		  Time::Piece->strptime( $politicalLine{"reg_date_original"}, "%m/%d/%y" );
 		my $now            = localtime;
 		my $daysRegistered = $now - $before;
-		$daysRegistered = ( $daysRegistered / ( 1440 * 24 ) );
+		$daysRegistered = ( $daysRegistered / (86400) );
+		$daysRegistered = round($daysRegistered);
 		$politicalLine{"days_registered"} = int($daysRegistered);
-	#	my $first = $yy . $mm . $dd;
-	#	my $second = $now;
-		#my $first = shift || die "Give two date strings YYYYMMDD YYYYMMDD\n";
-		#my $second = shift || die "Give two date strings YYYYMMDD YYYYMMDD\n";
-
-		my $days = Delta_Days( $first, $second);
-
-		print $days, $/;
 
 		evaluateVoter();
 		$politicalLine{"Primaries"} = $primaryCount;
