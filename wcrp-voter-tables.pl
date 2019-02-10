@@ -190,7 +190,7 @@ my @politicalHeading = (
 	"alpha_split",     "consolodation",
 	"party",           "portion",
 	"precinct",        "precinct_name",
-    "days_registered", "Generals",
+  "days_registered", "Generals",
 	"Primaries",       "Polls",
 	"Absentee",        "LeansDEM",
 	"LeansREP",        "Leans",
@@ -211,7 +211,7 @@ my @votingHeading = (
 	"election04",	"vote04",
 	"election05",   "vote05",    
 	"election06",	"vote06",
-    "election07", 	"vote07", 	
+  "election07", 	"vote07", 	
 	"election08",	"vote08",
 	"election09",   "vote09",   
 	"election10",	"vote10",
@@ -423,12 +423,20 @@ sub main {
 		$dd = sprintf( "%02d", $date[1] );
 		$yy = sprintf( "%02d", $date[2] );
 		$politicalLine{"reg_date_original"} = "$mm/$dd/$yy";
-		my $before =
-		  Time::Piece->strptime( $politicalLine{"reg_date_original"}, "%m/%d/%y" );
+	
+		if ($yy <= "30") {$yy = 2000 + $yy}
+		elsif ($yy > 30) {$yy = 1900 + $yy};
+		my $adjustedDate = "$mm/$dd/$yy";
+	#	my $before =
+	#	  Time::Piece->strptime( $politicalLine{"reg_date_original"}, "%m/%d/%y" );
+		my $before = Time::Piece->strptime( $adjustedDate, "%m/%d/%Y" );		
 		my $now            = localtime;
 		my $daysRegistered = $now - $before;
 		$daysRegistered = ( $daysRegistered / (86400) );
 		$daysRegistered = round($daysRegistered);
+		if ($daysRegistered < 0 ) {
+			print $daysRegistered;
+		}
 		$politicalLine{"days_registered"} = int($daysRegistered);
 
 		evaluateVoter();
