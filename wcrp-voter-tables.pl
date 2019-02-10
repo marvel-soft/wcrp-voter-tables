@@ -33,7 +33,7 @@ no warnings "uninitialized";
 
 my $records;
 #my $inputFile = "../test-in/2019 1st Free stopped proc.csv";    
-#my $inputFile = "../test-in/2019 1st Free List 1 voter.csv";    
+#my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-1100.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 
@@ -432,6 +432,7 @@ sub main {
 		$politicalLine{"days_registered"} = int($daysRegistered);
 
 		evaluateVoter();
+		
 		$politicalLine{"Primaries"} = $primaryCount;
 		$politicalLine{"Generals"}  = $generalCount;
 		$politicalLine{"Polls"}     = $pollCount;
@@ -559,10 +560,10 @@ sub printLine  {
 # tossed out special elections and mock elections
 #  voter reg_date is considered
 #  weights: strong, moderate, weak
-# if registered < 2 years       gen >= 1 and pri <= 0   = STRONG
-# if registered > 2 < 4 years   gen >= 1 and pri >= 0   = STRONG
-# if registered > 4 < 8 years   gen >= 4 and pri >= 0   = STRONG
-# if registered > 8 years       gen >= 6 and pri >= 0   = STRONG
+# if registered < 2 years       gen >= 1 and pri <= 0   = NEW
+# if registered > 2 < 4 years   gen >= 1 and pri >= 1   = STRONG
+# if registered > 4 < 8 years   gen >= 2 and pri >= 2   = STRONG
+# if registered > 8 years       gen >= 4 and pri >= 4   = STRONG
 sub evaluateVoter {
 	my $generalPollCount     = 0;
 	my $generalAbsenteeCount = 0;
@@ -584,7 +585,7 @@ sub evaluateVoter {
 	#set first vote in list
 	my $vote = 55;
 	my $cyc;
-	my $daysRegistered = $baseLine{"Days Registered"};
+	my $daysRegistered = $politicalLine{"days_registered"};
 	for ( my $cycle = 1 ; $cycle < 20 ; $cycle++, $vote += 1 ) {
 		$cyc = $cycle;
 
@@ -604,7 +605,7 @@ sub evaluateVoter {
 			next;
 		}
 		if ( ( $csvHeadings[$vote] ) =~ m/general/ ) {
-			if ( $csvRowHash{ $csvHeadings[$vote] } eq '' ) {
+			if ( $csvRowHash{ $csvHeadings[$vote] } eq ' ' ) {
 				$notElegible += 1;
 				next;
 			}
@@ -630,7 +631,7 @@ sub evaluateVoter {
 			}
 		}
 		if ( ( $csvHeadings[$vote] ) =~ m/primary/ ) {
-			if ( $csvRowHash{ $csvHeadings[$vote] } eq '' ) {
+			if ( $csvRowHash{ $csvHeadings[$vote] } eq ' ' ) {
 				$notElegible += 1;
 				next;
 			}
@@ -674,9 +675,9 @@ sub evaluateVoter {
 	}
 
   # Likely voter score:
-   # if registered < 2 years       gen <= 1 || notelig >= 1            = WEAK
-   # if registered < 2 years       gen == 1 ||                         = MODERATE
-   # if registered < 2 years       gen == 2 ||                         = STRONG
+   # if registered < 2 years       gen <= 1 || notelig >= 1            = NEW
+   # if registered < 2 years       gen == 1 ||                         = NEW
+   # if registered < 2 years       gen == 2 ||                         = NEW
 
    # if registered > 2 < 4 years   gen <= 0 || notelig >= 1            = WEAK
    # if registered > 2 < 4 years   gen >= 2 && pri >= 0                = MODERATE
@@ -692,12 +693,15 @@ sub evaluateVoter {
    # if registered > 8 years   gen >= 3 && gen <= 9  and pri >= 0      = MODERATE
    # if registered > 8 years   gen >= 6 && gen <= 12 and pri >= 0      = STRONG
 
-	if ( $daysRegistered < ( 365 * 2 + 1 ) ) {
+	if (3775 < ( 365 * 2 + 1 )) {
+		print "true";
+	}
+	if ($daysRegistered < ( 365 * 2 + 1 ))  {
 		if ( $generalCount <= 1 or $notElegible >= 1 ) {
 			$voterRank = "WEAK";
 		}
 		if ( $generalCount >= 1 ) {
-			$voterRank = "MODERATE";
+			$voterRank = "NEW";
 		}
 		if ( $generalCount >= 2 ) {
 			$voterRank = "STRONG";
