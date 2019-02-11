@@ -1,0 +1,8 @@
+#OS Junk
+[Tt]humbs.db
+.DS_Store
+
+#dev files
+*.csv
+*.txt
+.DS_Store
