@@ -35,9 +35,9 @@ my $records;
 #my $inputFile = "../test-in/2019 1st Free stopped proc.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 #my $inputFile = "../test-in/2018 4th Free-NO DEMS-1100.csv";    
-#my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
+my $inputFile = "../test-in/2018 4th Free-NO DEMS-100.csv";    
 
-my $inputFile = "../test-in/2019 1st Free List 1.7.19.csv";    
+#my $inputFile = "../test-in/2019 1st Free List 1.7.19.csv";    
 
 #my $inputFile = "../test-in/voter-leans-test.csv";    #
 #my $inputFile = "../test-in/2018-3rd Free List.csv";#
@@ -46,6 +46,8 @@ my $inputFile = "../test-in/2019 1st Free List 1.7.19.csv";
 #my $inputFile = "../test-in/2018-2nd-Free-500-PARTIES.csv";
 
 my $adPoliticalFile = "../test-in/adall-precincts-jul.csv";
+#my $stateVoterFile = "../test-in/nv-state-voter-list-20190218.csv";
+my $stateVoterFile = "../test-in/nv-washoe-id-last-20190219.csv";
 
 my $fileName         = "";
 my $baseFile         = "base.csv";
@@ -67,7 +69,9 @@ my %votingLine       = ();
 my @adPoliticalHash = ();
 my %adPoliticalHash;
 my $adPoliticalHeadings = "";
-my $helpReq            = 0;
+my @stateVoterHash = ();
+my %stateVoterHash;
+my $stateVoterHeadings = "";my $helpReq            = 0;
 my $maxLines           = "300000";
 my $voteCycle          = "";
 my $fileCount          = 1;
@@ -78,9 +82,16 @@ my $linesRead    = 0;
 my $linesIncRead    = 0;
 my $printData;
 my $linesWritten = 0;
-my $generalCount;
+
+
+my $selParty;
+my $skipRecords     = 0;
+my $skippedRecords  = 0;
+my $maintainDate;
+
 my $party;
 my $primaryCount;
+my $generalCount;
 my $pollCount;
 my $absenteeCount   = 0;
 my $leansRepCount   = 0;
@@ -153,9 +164,9 @@ my @baseProfile;
 my $baseHeading = "";
 my @baseHeading = (
     "voter_id",        "st_voter_id",     
-	"precinct",        "v_status", 
-	"name_prefix",     
-    "name_first",      "name_last",
+	"precinct",       "asm_dist",
+	"v_status",       "name_prefix",     
+  "name_first",      "name_last",
 	"name_middle",     "name_suffix",       
 	"birth_place",     "birth_date",
 	"gender",          "military",
@@ -244,6 +255,10 @@ sub main {
 		'lines=s'   => \$maxLines,
 		'votecycle' => \$voteCycle,
 		'help!'     => \$helpReq,
+		'party'     => \$selParty,
+		'skip'      => \$skipRecords,
+		'maintainDt' => \$maintainDate,
+
 	) or die "Incorrect usage!\n";
 	if ($helpReq) {
 		print "Come on, it's really not that hard.\n";
@@ -263,7 +278,7 @@ sub main {
 
 	# headings in an array to modify
 	# @csvHeadings will be used to create the files
-	@csvHeadings = split( /\s*,\s*/, $csvHeadings );
+  @csvHeadings = split( /\s*,\s*/, $csvHeadings );
 
 	# Build heading for new voter record
 	$baseHeading = join( ",", @baseHeading );
@@ -304,6 +319,7 @@ sub main {
 
 	# initialize the precinct-all table
 	adPoliticalAll(@adPoliticalHash);
+	stateVoterList(@stateVoterHash);
 
 	# Process loop
 	# Read the entire input and
@@ -318,7 +334,15 @@ sub main {
 			printLine ("$linesRead lines processed\n");
 			$linesIncRead = 0;
 		}
-		#
+		if ($skipRecords > 0) {
+			$skippedRecords = $skippedRecords+1;
+			if ($skippedRecords > $skipRecords) {
+					$skippedRecords = 0;
+			} else {
+					goto NEW;	
+			}
+		}
+		
 		# Get the data into an array that matches the headers array
 		chomp $line1Read;
 
@@ -336,6 +360,8 @@ sub main {
 		#- - - - - - - - - - - - - - - - - - - - - - - - - - 
 		%baseLine = ();
 		$baseLine{"precinct"}     = substr $csvRowHash{"precinct"}, 0, 6;
+		my $precinct              = substr $csvRowHash{"precinct"}, 0, 6;
+		$baseLine{"asm_dist"}     = $adPoliticalHash{$precinct}[2];
 		$baseLine{"v_status"}     = $csvRowHash{"status"};
 		$baseLine{"voter_id"}     = $csvRowHash{"voter_id"};
 		$baseLine{"name_last"}    = $csvRowHash{"name_last"};
@@ -427,8 +453,6 @@ sub main {
 		if ($yy <= "30") {$yy = 2000 + $yy}
 		elsif ($yy > 30) {$yy = 1900 + $yy};
 		my $adjustedDate = "$mm/$dd/$yy";
-	#	my $before =
-	#	  Time::Piece->strptime( $politicalLine{"reg_date_original"}, "%m/%d/%y" );
 		my $before = Time::Piece->strptime( $adjustedDate, "%m/%d/%Y" );		
 		my $now            = localtime;
 		my $daysRegistered = $now - $before;
@@ -521,14 +545,15 @@ sub main {
 		$linesWritten++;
 		#
 		# For now this is the in-elegant way I detect completion
+	}
 		if ( eof(INPUT) ) {
 			goto EXIT;
 		}
 		next;
 	}
 	#
-	goto NEW;
-}
+	#goto NEW;
+
 #
 # call main program controller
 main();
@@ -889,4 +914,32 @@ sub adPoliticalAll() {
 	}
 	close $adPoliticalFileh;
 	return @adPoliticalHash;
+}
+#
+# create the precinct-all hash
+#
+sub stateVoterList() {
+	$stateVoterHeadings = "";
+	my @stateVoterHeadings;
+	open( my $stateVoterFileh, $stateVoterFile )
+	  or die "Unable to open INPUT: $stateVoterFile Reason: $!";
+	$stateVoterHeadings = <$stateVoterFileh>;
+	chomp $stateVoterHeadings;
+	chop $stateVoterHeadings;
+
+	# headings in an array to modify
+	@stateVoterHeadings = split( /\s*,\s*/, $stateVoterHeadings );
+
+	# Build the UID->survey hash
+	while ( $line1Read = <$stateVoterFileh> ) {
+		chomp $line1Read;
+		my @values1 = split( /\s*,\s*/, $line1Read, -1 );
+
+		# Create hashes of line for searches
+		@stateVoterHash{@stateVoterHeadings} = @values1;
+		my $PRECINCT = $stateVoterHash{"cnty_id"};
+		@stateVoterHash{ $stateVoterHash{"cnty_id"} } = \@values1;
+	}
+	close $stateVoterFileh;
+	return @stateVoterHash;
 }
