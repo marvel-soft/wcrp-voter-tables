@@ -87,6 +87,7 @@ my $linesWritten = 0;
 my $selParty;
 my $skipRecords     = 0;
 my $skippedRecords  = 0;
+
 my $maintainDate;
 
 my $party;
@@ -163,7 +164,7 @@ my $baseLine;
 my @baseProfile;
 my $baseHeading = "";
 my @baseHeading = (
-    "voter_id",        "st_voter_id",     
+  "voter_id",       "st_voter_id",     
 	"precinct",       "asm_dist",
 	"v_status",       "name_prefix",     
   "name_first",      "name_last",
@@ -364,6 +365,7 @@ sub main {
 		$baseLine{"asm_dist"}     = $adPoliticalHash{$precinct}[2];
 		$baseLine{"v_status"}     = $csvRowHash{"status"};
 		$baseLine{"voter_id"}     = $csvRowHash{"voter_id"};
+		$baseLine{"st_voter_id"}  = $stateVoterHash{"cnty_id"};
 		$baseLine{"name_last"}    = $csvRowHash{"name_last"};
 		$baseLine{"name_suffix"}  = $csvRowHash{"name_suffix"};
 		$baseLine{"name_first"}   = $csvRowHash{"name_first"};
@@ -937,7 +939,7 @@ sub stateVoterList() {
 
 		# Create hashes of line for searches
 		@stateVoterHash{@stateVoterHeadings} = @values1;
-		my $PRECINCT = $stateVoterHash{"cnty_id"};
+		my $precinct = $stateVoterHash{"cnty_id"};
 		@stateVoterHash{ $stateVoterHash{"cnty_id"} } = \@values1;
 	}
 	close $stateVoterFileh;
