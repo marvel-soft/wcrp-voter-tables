@@ -13,9 +13,7 @@ use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use Time::Piece;
 use Math::Round;
-#use DateTime;
-#use DateTime::Duration;
-#use DateTime::Format::ISO8601;
+use List::BinarySearch::XS qw( binsearch  binsearch_pos );
 
 no warnings "uninitialized";
 
@@ -71,7 +69,9 @@ my %adPoliticalHash;
 my $adPoliticalHeadings = "";
 my @stateVoterHash = ();
 my %stateVoterHash;
-my $stateVoterHeadings = "";my $helpReq            = 0;
+my $stateVoterHeadings = "";
+my @stateVoterList = ();
+my $helpReq            = 0;
 my $maxLines           = "300000";
 my $voteCycle          = "";
 my $fileCount          = 1;
@@ -320,7 +320,8 @@ sub main {
 
 	# initialize the precinct-all table
 	adPoliticalAll(@adPoliticalHash);
-	stateVoterList(@stateVoterHash);
+	#stateVoterList(@stateVoterHash);
+	stateVoterList(@stateVoterList);
 
 	# Process loop
 	# Read the entire input and
@@ -916,6 +917,32 @@ sub adPoliticalAll() {
 	}
 	close $adPoliticalFileh;
 	return @adPoliticalHash;
+}
+#
+# create the voter list
+#
+sub stateVoterList() {
+	$stateVoterHeadings = "";
+	my @stateVoterHeadings;
+	open( my $stateVoterFileh, $stateVoterFile )
+	  or die "Unable to open INPUT: $stateVoterFile Reason: $!";
+	$stateVoterHeadings = <$stateVoterFileh>;
+	chomp $stateVoterHeadings;
+	chop $stateVoterHeadings;
+
+	# headings in an array to modify
+	@stateVoterHeadings = split( /\s*,\s*/, $stateVoterHeadings );
+
+	# Build the UID->survey hash
+	while ( $line1Read = <$stateVoterFileh> ) {
+		chomp $line1Read;
+		my @values1 = split( /\s*,\s*/, $line1Read, -1 );
+
+		# Create list for searches
+		@stateVoterList = @values1;
+	}
+	close $stateVoterFileh;
+	return @stateVoterList;
 }
 #
 # create the precinct-all hash
